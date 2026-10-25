@@ -1,0 +1,121 @@
+
+DROP TABLE IF EXISTS rentals CASCADE;
+DROP TABLE IF EXISTS vhs_tapes CASCADE;
+DROP TABLE IF EXISTS movie_cast CASCADE;
+DROP TABLE IF EXISTS movies CASCADE;
+DROP TABLE IF EXISTS clients CASCADE;
+DROP TABLE IF EXISTS actors CASCADE;
+DROP TABLE IF EXISTS genres CASCADE;
+DROP TABLE IF EXISTS directors CASCADE;
+
+
+CREATE TABLE IF NOT EXISTS directors (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(150) NOT NULL,
+    country VARCHAR(100),
+    birth_year INT CHECK (birth_year > 0)
+);
+
+CREATE TABLE IF NOT EXISTS genres (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    age_rating VARCHAR(10) DEFAULT '0+',
+    description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS actors (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(150) NOT NULL,
+    birth_year INT CHECK (birth_year > 0),
+    country VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS clients (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(150) NOT NULL,
+    passport_data VARCHAR(50) NOT NULL UNIQUE,
+    phone VARCHAR(20) NOT NULL,
+    registration_date DATE DEFAULT CURRENT_DATE
+);
+
+
+
+CREATE TABLE IF NOT EXISTS movies (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    director_id INT REFERENCES directors(id) ON DELETE SET NULL,
+    genre_id INT REFERENCES genres(id) ON DELETE SET NULL,
+    release_year INT CHECK (release_year > 1800),
+    rating_imdb NUMERIC(3, 1) CHECK (rating_imdb >= 0 AND rating_imdb <= 10)
+);
+
+
+CREATE TABLE IF NOT EXISTS movie_cast (
+    movie_id INT REFERENCES movies(id) ON DELETE CASCADE,
+    actor_id INT REFERENCES actors(id) ON DELETE CASCADE,
+    PRIMARY KEY (movie_id, actor_id)
+);
+
+CREATE TABLE IF NOT EXISTS vhs_tapes (
+    id SERIAL PRIMARY KEY,
+    movie_id INT REFERENCES movies(id) ON DELETE CASCADE,
+    inventory_number VARCHAR(50) NOT NULL UNIQUE,
+    status VARCHAR(50) DEFAULT 'Доступна' CHECK (status IN ('Доступна', 'Выдана', 'В ремонте', 'Списана')),
+    purchase_date DATE DEFAULT CURRENT_DATE
+);
+
+
+CREATE TABLE IF NOT EXISTS rentals (
+    id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(id) ON DELETE CASCADE,
+    vhs_id INT REFERENCES vhs_tapes(id) ON DELETE SET NULL,
+    rental_date DATE DEFAULT CURRENT_DATE,
+    return_date DATE,
+    rental_price NUMERIC(10, 2) NOT NULL CHECK (rental_price >= 0),
+    overdue_fine NUMERIC(10, 2) DEFAULT 0.00 CHECK (overdue_fine >= 0),
+    CHECK (return_date >= rental_date)
+);
+
+
+
+INSERT INTO genres (id, name, age_rating) VALUES
+(1, 'Боевик', '18+'),
+(2, 'Фантастика', '12+'),
+(3, 'Криминал', '18+'),
+(4, 'Комедия', '6+'),
+(5, 'Триллер', '16+');
+
+INSERT INTO directors (full_name, country, birth_year) VALUES
+(1, 'Джеймс Кэмерон', 'Канада', 1954),
+(2, 'Роберт Земекис', 'США', 1952),
+(3, 'Квентин Тарантино', 'США', 1963);
+
+INSERT INTO movies (title, director_id, genre_id, release_year, rating_imdb) VALUES
+('Терминатор 2: Судный день', 1, 2, 1991, 8.6),
+('Назад в будущее', 2, 2, 1985, 8.5),
+('Криминальное чтиво', 3, 3, 1994, 8.9);
+
+INSERT INTO actors (full_name, birth_year, country) VALUES
+('Арнольд Шварценеггер', 1947, 'Австрия'),
+('Майкл Джей Фокс', 1961, 'Канада'),
+('Джон Траволта', 1954, 'США');
+
+
+INSERT INTO movie_cast (movie_id, actor_id) VALUES
+(1, 1), -- Шварценеггер в Терминаторе
+(2, 2), -- Майкл Дж. Фокс в Назад в будущее
+(3, 3); -- Траволта в Криминальном чтиве
+
+INSERT INTO clients (full_name, passport_data, phone) VALUES
+('Петров Петр Петрович', '4500 123456', '+7-999-111-22-33'),
+('Иванов Сергей Владимирович', '4600 654321', '+7-999-555-44-33');
+
+INSERT INTO vhs_tapes (movie_id, inventory_number, status) VALUES
+(1, 'VHS-T2-01', 'Выдана'),
+(1, 'VHS-T2-02', 'Доступна'),
+(2, 'VHS-BTTF-01', 'Доступна'),
+(3, 'VHS-PF-01', 'Выдана');
+
+INSERT INTO rentals (client_id, vhs_id, rental_date, return_date, rental_price, overdue_fine) VALUES
+(1, 1, '2026-10-01', '2026-10-05', 150.00, 0.00),
+(2, 4, '2026-10-20', NULL, 200.00, 0.00);
