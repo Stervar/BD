@@ -1,0 +1,89 @@
+DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS books CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
+DROP TABLE IF EXISTS categories CASCADE;
+DROP TABLE IF EXISTS authors CASCADE;
+
+
+CREATE TABLE IF NOT EXISTS authors (
+    id SERIAL PRIMARY KEY,
+    alias_fullname VARCHAR(150) NOT NULL,
+    country VARCHAR(100),
+    birth_year INT CHECK (birth_year > 0),
+    website VARCHAR(255)
+);
+
+
+CREATE TABLE IF NOT EXISTS categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    age_rating VARCHAR(10) DEFAULT '0+',
+    description TEXT
+);
+
+
+CREATE TABLE IF NOT EXISTS books (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    author_id INT REFERENCES authors(id) ON DELETE SET NULL,
+    category_id INT REFERENCES categories(id) ON DELETE SET NULL,
+    price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
+    stock_balance INT NOT NULL DEFAULT 0 CHECK (stock_balance >= 0)
+);
+
+
+CREATE TABLE IF NOT EXISTS customers (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    delivery_address TEXT,
+    registration_date DATE DEFAULT CURRENT_DATE
+);
+
+
+CREATE TABLE IF NOT EXISTS orders (
+    id SERIAL PRIMARY KEY,
+    customer_id INT REFERENCES customers(id) ON DELETE CASCADE,
+    book_id INT REFERENCES books(id) ON DELETE SET NULL,
+    quantity INT NOT NULL CHECK (quantity > 0),
+    order_date DATE DEFAULT CURRENT_DATE,
+    status VARCHAR(50) DEFAULT 'Новый'
+);
+
+
+
+
+INSERT INTO authors (alias_fullname, country, birth_year, website) VALUES
+('Александр Пушкин', 'Россия', 1799, 'https://pushkinland.ru'),
+('Фёдор Достоевский', 'Россия', 1821, 'https://dostoevskyworld.ru'),
+('Джордж Оруэлл', 'Великобритания', 1903, 'https://orwellfoundation.com'),
+('Стивен Кинг', 'США', 1947, 'https://stephenking.com'),
+('Джоан Роулинг', 'Великобритания', 1965, 'https://jkrowling.com');
+
+
+INSERT INTO categories (name, age_rating, description) VALUES
+('Классическая литература', '12+', 'Произведения, признанные эталоном художественного слова'),
+('Антиутопия', '16+', 'Жанр о художественном мире, в котором развитие пошло в негативном направлении'),
+('Ужасы и мистика', '18+', 'Книги, призванные вызвать у читателя чувство страха и напряжения'),
+('Фэнтези', '6+', 'Жанр фантастической литературы, основанный на использовании мифологических и сказочных мотивов');
+
+
+INSERT INTO books (title, author_id, category_id, price, stock_balance) VALUES
+('Капитанская дочка', 1, 1, 450.00, 25),
+('Преступление и наказание', 2, 1, 600.00, 15),
+('1984', 3, 2, 550.00, 40),
+('Оно', 4, 3, 890.00, 10),
+('Гарри Поттер и философский камень', 5, 4, 750.00, 50);
+
+
+INSERT INTO customers (full_name, email, delivery_address, registration_date) VALUES
+('Иван Иванов', 'ivanov@email.com', 'г. Москва, ул. Ленина, д. 5, кв. 12', '2026-01-15'),
+('Анна Петрова', 'petrova@email.com', 'г. Санкт-Петербург, Невский пр., д. 20, кв. 3', '2026-02-10'),
+('Сергей Сидоров', 'sidorov@email.com', 'г. Новосибирск, ул. Кирова, д. 45', '2026-03-01');
+
+
+INSERT INTO orders (customer_id, book_id, quantity, order_date, status) VALUES
+(1, 3, 2, '2026-10-01', 'Доставлен'),
+(2, 5, 1, '2026-10-05', 'В пути'),
+(3, 1, 3, '2026-10-10', 'Обрабатывается'),
+(1, 4, 1, '2026-10-11', 'Новый');
